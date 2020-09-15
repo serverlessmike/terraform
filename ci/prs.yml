@@ -1,0 +1,185 @@
+jobs:
+- name: test_cloudops-terraform_dev
+  serial: true
+  public: true
+  plan:
+  - get: "git_repo_cloudops-terraform"
+    trigger: true
+  - get: "terraform_docker_image"
+  - task: "plan"
+    image: "terraform_docker_image"
+    config:
+      platform: linux
+      inputs:
+      - name: "git_repo_cloudops-terraform"
+      params:
+        APP_ENV: dev
+        GITHUB_PRIVATE_KEY: ((github_private_key))
+      run:
+        dir: git_repo_cloudops-terraform
+        path: sh
+        args:
+          - "-ec"
+          - |
+            mkdir ~/.ssh
+            echo -e "$GITHUB_PRIVATE_KEY" > ~/.ssh/id_rsa
+            chmod 0600 ~/.ssh/id_rsa
+            ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts
+            apk add make
+            make plan
+    on_success:
+      put: "git_repo_cloudops-terraform"
+      params:
+        path: "git_repo_cloudops-terraform"
+        status: success
+        context: "plan dev"
+    on_failure:
+      put: "git_repo_cloudops-terraform"
+      params:
+        path: "git_repo_cloudops-terraform"
+        status: failure
+        context: "plan dev"
+- name: test_cloudops-terraform_staging
+  serial: true
+  public: true
+  plan:
+  - get: "git_repo_cloudops-terraform"
+    trigger: true
+    passed: ["test_cloudops-terraform_dev"]
+  - get: "terraform_docker_image"
+  - task: "plan"
+    image: "terraform_docker_image"
+    config:
+      platform: linux
+      inputs:
+      - name: "git_repo_cloudops-terraform"
+      params:
+        APP_ENV: staging
+        GITHUB_PRIVATE_KEY: ((github_private_key))
+      run:
+        dir: git_repo_cloudops-terraform
+        path: sh
+        args:
+          - "-ec"
+          - |
+            mkdir ~/.ssh
+            echo -e "$GITHUB_PRIVATE_KEY" > ~/.ssh/id_rsa
+            chmod 0600 ~/.ssh/id_rsa
+            ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts
+            apk add make
+            make plan
+    on_success:
+      put: "git_repo_cloudops-terraform"
+      params:
+        path: "git_repo_cloudops-terraform"
+        status: success
+        context: "plan staging"
+    on_failure:
+      put: "git_repo_cloudops-terraform"
+      params:
+        path: "git_repo_cloudops-terraform"
+        status: failure
+        context: "plan staging"
+- name: test_cloudops-terraform_management
+  serial: true
+  public: true
+  plan:
+  - get: "git_repo_cloudops-terraform"
+    trigger: true
+  - get: "terraform_docker_image"
+  - task: "plan"
+    image: "terraform_docker_image"
+    config:
+      platform: linux
+      inputs:
+      - name: "git_repo_cloudops-terraform"
+      params:
+        APP_ENV: management
+        GITHUB_PRIVATE_KEY: ((github_private_key))
+      run:
+        dir: git_repo_cloudops-terraform
+        path: sh
+        args:
+          - "-ec"
+          - |
+            mkdir ~/.ssh
+            echo -e "$GITHUB_PRIVATE_KEY" > ~/.ssh/id_rsa
+            chmod 0600 ~/.ssh/id_rsa
+            ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts
+            apk add make
+            make plan
+    on_success:
+      put: "git_repo_cloudops-terraform"
+      params:
+        path: "git_repo_cloudops-terraform"
+        status: success
+        context: "plan management"
+    on_failure:
+      put: "git_repo_cloudops-terraform"
+      params:
+        path: "git_repo_cloudops-terraform"
+        status: failure
+        context: "plan management"
+- name: test_cloudops-terraform_prod
+  serial: true
+  public: true
+  plan:
+  - get: "git_repo_cloudops-terraform"
+    trigger: true
+    passed: ["test_cloudops-terraform_staging"]
+  - get: "terraform_docker_image"
+  - task: "plan"
+    image: "terraform_docker_image"
+    config:
+      platform: linux
+      inputs:
+      - name: "git_repo_cloudops-terraform"
+      params:
+        APP_ENV: prod
+        GITHUB_PRIVATE_KEY: ((github_private_key))
+      run:
+        dir: git_repo_cloudops-terraform
+        path: sh
+        args:
+          - "-ec"
+          - |
+            mkdir ~/.ssh
+            echo -e "$GITHUB_PRIVATE_KEY" > ~/.ssh/id_rsa
+            chmod 0600 ~/.ssh/id_rsa
+            ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts
+            apk add make
+            make plan
+    on_success:
+      put: "git_repo_cloudops-terraform"
+      params:
+        path: "git_repo_cloudops-terraform"
+        status: success
+        context: "plan prod"
+    on_failure:
+      put: "git_repo_cloudops-terraform"
+      params:
+        path: "git_repo_cloudops-terraform"
+        status: failure
+        context: "plan prod"
+
+resources:
+- name: "terraform_docker_image"
+  type: docker-image
+  source:
+    repository: "hashicorp/terraform"
+    tag: "0.11.14"
+
+- name: "git_repo_cloudops-terraform"
+  type: pull-request
+  source:
+    access_token: ((github_access_key))
+    private_key: ((github_private_key))
+    repo: "River-Island/cloudops-terraform"
+    uri: "git@github.com:River-Island/cloudops-terraform.git"
+    every: true
+resource_types:
+- name: pull-request
+  type: docker-image
+  source:
+    repository: jtarchie/pr
+    

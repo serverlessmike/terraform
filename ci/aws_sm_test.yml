@@ -1,0 +1,53 @@
+jobs:
+- name: test_concourse_aws_sm
+  serial: true
+  public: true
+  plan:
+  - get: "git_repo_cloudops-terraform"
+    trigger: true
+  - get: "terraform_docker_image"
+  - task: "test"
+    image: "terraform_docker_image"
+    config:
+      platform: linux
+      inputs:
+      - name: "git_repo_cloudops-terraform"
+      params:
+        GITHUB_PRIVATE_KEY: ((github_private_key))
+        GITHUB_ACCESS_KEY: ((github_access_key))
+      run:
+        dir: git_repo_cloudops-terraform
+        path: sh
+        args:
+          - "-ec"
+          - |
+            mkdir ~/.ssh
+            echo -e "$GITHUB_PRIVATE_KEY" > ~/.ssh/id_rsa
+            chmod 0600 ~/.ssh/id_rsa
+            ssh-keyscan -H github.com > /etc/ssh/ssh_known_hosts
+            echo -e "$GITHUB_ACCESSKEY_KEY"
+            apk add make
+            echo -e "All done"
+
+resources:
+- name: "terraform_docker_image"
+  type: docker-image
+  source:
+    repository: "hashicorp/terraform"
+    tag: "0.11.14"
+
+- name: "git_repo_cloudops-terraform"
+  type: pull-request
+  source:
+    access_token: ((github_access_key))
+    private_key: ((github_private_key))
+    repo: "River-Island/cloudops-terraform"
+    uri: "git@github.com:River-Island/cloudops-terraform.git"
+    every: true
+    
+resource_types:
+- name: pull-request
+  type: docker-image
+  source:
+    repository: jtarchie/pr
+    

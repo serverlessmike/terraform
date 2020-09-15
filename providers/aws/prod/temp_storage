@@ -1,0 +1,13 @@
+# If you need temporary storage to attach to an instance,
+# then set the values of the parameters in the stanza below
+# as required and rename this file to add a ".tf" suffix
+
+module "tempstorage" {
+  source        = "../../../modules/ebs"
+  drives        = ["D", "E"]
+  product       = "mksql"
+  volume_sizes = ["750", "1536"]
+  environment   = "prod"
+  owner         = "DBAs"
+  instance_id   = "i-076cbbd6ca6d57d49"
+}

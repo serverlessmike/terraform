@@ -1,0 +1,11 @@
+ssh_user_rsa_key
+**.pem
+terraform.tfstate.backup
+terraform.tfstate
+.terraform/
+.DS_Store
+**credentials.yml
+plan.tf
+tfplan
+.#*
+.idea
